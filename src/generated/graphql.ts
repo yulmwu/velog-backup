@@ -152,6 +152,14 @@ export type VelogConfig = {
   title?: Maybe<Scalars['String']['output']>;
 };
 
+export type ReadPostQueryVariables = Exact<{
+  username: Scalars['String']['input'];
+  url_slug?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type ReadPostQuery = { __typename?: 'Query', post?: { __typename?: 'Post', id: string, title?: string | null, released_at?: any | null, updated_at?: any | null, tags?: Array<string | null> | null, body?: string | null, short_description?: string | null, is_private?: boolean | null, thumbnail?: string | null, url_slug?: string | null, user?: { __typename?: 'User', username?: string | null } | null, series?: { __typename?: 'Series', name?: string | null, url_slug?: string | null } | null, linked_posts?: { __typename?: 'LinkedPosts', previous?: { __typename?: 'Post', id: string, title?: string | null, url_slug?: string | null } | null, next?: { __typename?: 'Post', id: string, title?: string | null, url_slug?: string | null } | null } | null } | null };
+
 export type VelogPostsQueryVariables = Exact<{
   cursor?: InputMaybe<Scalars['ID']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -161,9 +169,44 @@ export type VelogPostsQueryVariables = Exact<{
 }>;
 
 
-export type VelogPostsQuery = { __typename?: 'Query', posts?: Array<{ __typename?: 'Post', id: string, title?: string | null, short_description?: string | null, thumbnail?: string | null, url_slug?: string | null, released_at?: any | null, updated_at?: any | null, comments_count?: number | null, tags?: Array<string | null> | null, is_private?: boolean | null, likes?: number | null, user?: { __typename?: 'User', id: string, username?: string | null, profile?: { __typename?: 'UserProfile', id: string, thumbnail?: string | null, display_name?: string | null } | null } | null } | null> | null };
+export type VelogPostsQuery = { __typename?: 'Query', posts?: Array<{ __typename?: 'Post', id: string, title?: string | null, url_slug?: string | null } | null> | null };
 
 
+export const ReadPostDocument = gql`
+    query readPost($username: String!, $url_slug: String) {
+  post(username: $username, url_slug: $url_slug) {
+    id
+    title
+    released_at
+    updated_at
+    tags
+    body
+    short_description
+    is_private
+    thumbnail
+    url_slug
+    user {
+      username
+    }
+    series {
+      name
+      url_slug
+    }
+    linked_posts {
+      previous {
+        id
+        title
+        url_slug
+      }
+      next {
+        id
+        title
+        url_slug
+      }
+    }
+  }
+}
+    `;
 export const VelogPostsDocument = gql`
     query velogPosts($cursor: ID, $limit: Int = 20, $username: String!, $temp_only: Boolean, $tag: String) {
   posts(
@@ -175,24 +218,7 @@ export const VelogPostsDocument = gql`
   ) {
     id
     title
-    short_description
-    thumbnail
-    user {
-      id
-      username
-      profile {
-        id
-        thumbnail
-        display_name
-      }
-    }
     url_slug
-    released_at
-    updated_at
-    comments_count
-    tags
-    is_private
-    likes
   }
 }
     `;
@@ -204,6 +230,9 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    readPost(variables: ReadPostQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<ReadPostQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReadPostQuery>({ document: ReadPostDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'readPost', 'query', variables);
+    },
     velogPosts(variables: VelogPostsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders, signal?: RequestInit['signal']): Promise<VelogPostsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<VelogPostsQuery>({ document: VelogPostsDocument, variables, requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders }, signal }), 'velogPosts', 'query', variables);
     }

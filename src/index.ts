@@ -1,42 +1,56 @@
-import { GraphQLClient } from 'graphql-request'
-import { getSdk, Post, VelogPostsQueryVariables } from './generated/graphql'
-import dotenv from 'dotenv'
+import { fetchPost, fetchPosts } from './client'
+import { getSdk, Post } from './generated/graphql'
+import fs from 'fs'
 
-dotenv.config({ quiet: true })
+const USERNAME = 'yulmwu'
 
-const client = new GraphQLClient('https://v2.velog.io/graphql', {
-    headers: {
-        Authorization: `Bearer ${process.env.VELOG_JWT_ACCESS_TOKEN}`,
-    },
-})
+interface PostWithData extends Post {
+    data: Post
+}
 
-const sdk = getSdk(client)
+;(async () => {
+    const fetched = await fetchPosts(USERNAME)
 
-const LIMIT = 20
+    // const post = await fetchPost('yulmwu', 'aws-serverless')
+    // const posts = fetched.map((post) => {
+    //     // if (!post || !post.url_slug) return;
 
-const fetchPosts = async (username: string, cursor?: string, posts: Post[] = []): Promise<Post[]> => {
-    const data = await sdk.velogPosts({
-        cursor,
-        limit: LIMIT,
-        username,
-    })
+    //     // return {
+    //     //     id: post.id,
+    //     //     title: post.title,
+    //     //     url_slug: post.url_slug,
+    //     //     data: await fetchPost(USERNAME, post.url_slug),
+    //     // }
+    // })
 
-    if (data.posts && data.posts.length > 0) {
-        posts.push(...data.posts.filter((post): post is Post => post !== null))
+    const posts: PostWithData[] = []
 
-        if (data.posts.length < LIMIT) return posts
+    for (const post of fetched) {
+        if (!post) {
+            console.error('Post is null or undefined, skipping...')
+            continue
+        }
 
-        const nextCursor = data.posts[data.posts.length - 1]?.id
-        if (nextCursor) await fetchPosts(username, nextCursor, posts)
+        if (!post.url_slug) {
+            console.error(`Post with ID ${post.id} has no url_slug, skipping...`)
+            continue
+        }
+
+        const data = await fetchPost(USERNAME, post.url_slug)
+        if (!data) {
+            console.error(`Failed to fetch post ${post.url_slug}`)
+            continue
+        }
+
+        posts.push({
+            id: post.id,
+            title: post.title,
+            url_slug: post.url_slug,
+            data,
+        })
     }
 
-    return posts
-}
+    console.log(`Fetched ${posts.length} posts`)
 
-const fetchAllPosts = async () => {
-    const allPosts = await fetchPosts('yulmwu')
-    console.log(allPosts)
-    console.log(`Total posts fetched: ${allPosts.length}`)
-}
-
-fetchAllPosts()
+    fs.writeFileSync('output.json', JSON.stringify(posts, null, 4), 'utf-8')
+})()

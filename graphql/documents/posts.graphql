@@ -2,23 +2,6 @@ query velogPosts($cursor: ID, $limit: Int = 20, $username: String!, $temp_only: 
     posts(cursor: $cursor, limit: $limit, username: $username, temp_only: $temp_only, tag: $tag) {
         id
         title
-        short_description
-        thumbnail
-        user {
-            id
-            username
-            profile {
-                id
-                thumbnail
-                display_name
-            }
-        }
         url_slug
-        released_at
-        updated_at
-        comments_count
-        tags
-        is_private
-        likes
     }
 }
