@@ -165,7 +165,7 @@ export type VelogPostsQuery = { __typename?: 'Query', posts?: Array<{ __typename
 
 
 export const VelogPostsDocument = gql`
-    query velogPosts($cursor: ID, $limit: Int, $username: String!, $temp_only: Boolean, $tag: String) {
+    query velogPosts($cursor: ID, $limit: Int = 20, $username: String!, $temp_only: Boolean, $tag: String) {
   posts(
     cursor: $cursor
     limit: $limit
