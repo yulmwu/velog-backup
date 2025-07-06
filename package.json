@@ -1,0 +1,32 @@
+{
+    "name": "velog-backup",
+    "version": "1.0.0",
+    "description": "",
+    "homepage": "https://github.com/yulmwu/velog-backup#readme",
+    "bugs": {
+        "url": "https://github.com/yulmwu/velog-backup/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yulmwu/velog-backup.git"
+    },
+    "license": "MIT",
+    "author": "yulmwu (Kim Jun Young)",
+    "type": "commonjs",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc && npm run codegen",
+        "start": "npm run build && node dist/index.js",
+        "codegen": "graphql-codegen --config codegen.yaml"
+    },
+    "dependencies": {
+        "graphql": "^16.11.0",
+        "graphql-request": "^7.2.0"
+    },
+    "devDependencies": {
+        "@graphql-codegen/cli": "^5.0.7",
+        "@graphql-codegen/typescript": "^4.1.6",
+        "@graphql-codegen/typescript-graphql-request": "^6.3.0",
+        "@graphql-codegen/typescript-operations": "^4.6.1"
+    }
+}
