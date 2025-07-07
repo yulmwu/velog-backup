@@ -8,5 +8,3 @@ aws lambda update-function-code \
     --function-name velogBackup \
     --zip-file fileb://code.zip \
     --region ap-northeast-2
-
-
