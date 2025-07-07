@@ -8,5 +8,5 @@ build({
     sourcemap: false,
     platform: 'node',
     target: 'es2020',
-    outfile: 'bundle/index.js',
+    outfile: 'build/index.js',
 }).catch(() => process.exit(1))

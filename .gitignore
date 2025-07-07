@@ -1,8 +1,8 @@
 node_modules
 dist
-bundle
+build
 .vscode
 .DS_Store
 .env
 output.json
-backup
+backup*

@@ -3,8 +3,9 @@ import fs from 'fs'
 import { PostsWithData } from './types'
 import { fileWrite } from './writer'
 import { BASE_PATH, USERNAME } from './config'
+import { purgeS3Bucket, uploadS3 } from './aws'
 
-const main = async () => {
+export const handler = async () => {
     if (fs.existsSync(BASE_PATH))
         fs.rm(BASE_PATH, { recursive: true, force: true }, (err) => {
             if (err) {
@@ -41,17 +42,13 @@ const main = async () => {
         })
     }
 
-    fileWrite(posts, {
+    await fileWrite(posts, {
         json_file: true,
         metadata: true,
     })
 
     console.log(`Fetched ${posts.length} posts`)
-}
 
-main()
-    .then(() => console.log('Backup completed successfully'))
-    .catch((error) => {
-        console.error('Error during backup:', error)
-        process.exit(1)
-    })
+    await uploadS3()
+    await purgeS3Bucket(5)
+}

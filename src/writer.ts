@@ -17,28 +17,43 @@ import axios from 'axios'
 const whiteSpaceReplace = (str: string): string => str.replace(/\s+/g, '-').toLowerCase()
 const dateFormat = (date: string): string => new Date(date).toISOString().split('T')[0]
 
-const imageDownload = (url: string, path: string) => {
+const imageDownload = async (url: string, path: string) => {
     if (fs.existsSync(path)) {
         console.log(`Image already exists at ${path}, skipping download`)
         return
     }
 
-    axios({
-        method: 'get',
-        url,
-        responseType: 'stream',
+    // axios({
+    //     method: 'get',
+    //     url,
+    //     responseType: 'stream',
+    // })
+    //     .then((response) => {
+    //         response.data.pipe(fs.createWriteStream(path)).on('error', (err: Error) => {
+    //             console.error(`Error saving image: ${err.message}`)
+    //             process.exit(0)
+    //         })
+    //     })
+    //     .catch((err) => {
+    //         console.error(`Failed to download image from ${url}: ${err.message}`)
+    //         process.exit(0)
+    //     })
+
+    const response = await axios.get(url, { responseType: 'stream' })
+    const writer = fs.createWriteStream(path)
+
+    response.data.pipe(writer)
+
+    return new Promise((resolve, reject) => {
+        writer.on('finish', () => resolve(true))
+        writer.on('error', (err: Error) => {
+            console.error(`Error saving image: ${err.message}`)
+            reject(err)
+        })
     })
-        .then((response) => {
-            response.data.pipe(fs.createWriteStream(path)).on('error', (err: Error) => {
-                console.error(`Error saving image: ${err.message}`)
-            })
-        })
-        .catch((err) => {
-            console.error(`Failed to download image from ${path}: ${err.message}`)
-        })
 }
 
-export const imageExtract = (post: Post): Post => {
+export const imageExtract = async (post: Post): Promise<Post> => {
     if (!post.body) return post
 
     const matches = [...post.body.matchAll(REGEX_IMAGE_URL)]
@@ -67,20 +82,20 @@ export const imageExtract = (post: Post): Post => {
         post.body = post.body.replace(
             match[0],
             seriesName
-                ? `![${altText}](../../${IMAGE_DIR_NAME}/${seriesName}/${formattedDate}-${postSlug}/${imageUuid}.${imageExt})`
-                : `![${altText}](../${IMAGE_DIR_NAME}/${formattedDate}-${postSlug}/${imageUuid}.${imageExt})`
+                ? `![${altText}](../../${IMAGE_DIR_NAME}/${seriesName}/${formattedDate}-${postSlug}/${imageUuid}${imageExt})`
+                : `![${altText}](../${IMAGE_DIR_NAME}/${formattedDate}-${postSlug}/${imageUuid}${imageExt})`
         )
 
         fs.mkdirSync(postPath, { recursive: true })
 
-        const imagePath = path.join(postPath, `${imageUuid}.${imageExt}`)
-        imageDownload(imageUrl, imagePath)
+        const imagePath = path.join(postPath, `${imageUuid}${imageExt}`)
+        await imageDownload(imageUrl, imagePath)
     }
 
     return post
 }
 
-const thumbnailExtract = (post: Post): string | null => {
+const thumbnailExtract = async (post: Post): Promise<string | null> => {
     if (!post.thumbnail) return null
     const thumbnailExt = path.extname(post.thumbnail)
 
@@ -93,7 +108,7 @@ const thumbnailExtract = (post: Post): string | null => {
         : path.join(THUMBNAIL_DIR, `${whiteSpaceReplace(post.url_slug!)}${thumbnailExt}`)
 
     fs.mkdirSync(path.dirname(thumbnailPath), { recursive: true })
-    imageDownload(post.thumbnail, thumbnailPath)
+    await imageDownload(post.thumbnail, thumbnailPath)
 
     return post.series
         ? `../../${THUMBNAIL_DIR_NAME}/${whiteSpaceReplace(post.series.name!)}/${whiteSpaceReplace(
@@ -125,7 +140,7 @@ is_private: false (.is_private)
 body
 */
 
-export const fileWrite = (posts: PostsWithData, options: FileWriterOptions) => {
+export const fileWrite = async (posts: PostsWithData, options: FileWriterOptions) => {
     if (options.json_file) {
         if (!fs.existsSync(BASE_PATH)) {
             fs.mkdirSync(BASE_PATH, { recursive: true })
@@ -141,13 +156,13 @@ export const fileWrite = (posts: PostsWithData, options: FileWriterOptions) => {
             continue
         }
 
-        post.data = imageExtract(post.data)
+        post.data = await imageExtract(post.data)
 
         const formattedDate = dateFormat(post.data.released_at)
         const postSlug = whiteSpaceReplace(post.url_slug!)
 
         if (options.metadata) {
-            const thumbnailPath = thumbnailExtract(post.data)
+            const thumbnailPath = await thumbnailExtract(post.data)
             const metadata = `
 ---
 title: "${post.data.title}"
