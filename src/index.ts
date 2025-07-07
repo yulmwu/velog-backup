@@ -5,7 +5,13 @@ import { fileWrite } from './writer'
 import { BASE_PATH, USERNAME } from './config'
 
 const main = async () => {
-    if (fs.existsSync(BASE_PATH)) fs.rmdirSync(BASE_PATH, { recursive: true })
+    if (fs.existsSync(BASE_PATH))
+        fs.rm(BASE_PATH, { recursive: true, force: true }, (err) => {
+            if (err) {
+                console.error(`Failed to remove existing backup directory: ${err.message}`)
+                process.exit(1)
+            }
+        })
 
     const fetched = await fetchPosts(USERNAME)
     const posts: PostsWithData = []
